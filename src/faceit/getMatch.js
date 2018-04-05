@@ -39,17 +39,20 @@ const getMatch = (players, matchId) => {
         const faction2 = getFaction(2);
         const playerIds = _.values(_.mapValues(players, 'id'));
 
-        let faction1Count = 0;
+        const faction1Count = [];
+        let index = 0;
         _.values(_.mapValues(faction1, 'id')).map((id) => {
-          if (playerIds.indexOf(id) !== -1) {
-            faction1Count++;
+          index = playerIds.indexOf(id);
+          if (index !== -1) {
+            faction1Count.push(playerIds[index]);
           }
         });
 
-        let faction2Count = 0;
+        const faction2Count = [];
         _.values(_.mapValues(faction2, 'id')).map((id) => {
-          if (playerIds.indexOf(id) !== -1) {
-            faction2Count++;
+          index = playerIds.indexOf(id);
+          if (index !== -1) {
+            faction2Count.push(playerIds[index]);
           }
         });
 
@@ -68,12 +71,14 @@ const getMatch = (players, matchId) => {
         };
 
         let teams = [faction1Data, faction2Data];
+        let playing = faction1Count;
 
-        if (faction1Count < faction2Count) {
+        if (faction1Count.length < faction2Count.length) {
+          playing = faction2Count;
           teams = [faction2Data, faction1Data];
         }
 
-        resolve({ matchId, teams });
+        resolve({ teams, playing, matchData: match });
       });
   });
 };

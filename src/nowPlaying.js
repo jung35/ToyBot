@@ -41,11 +41,12 @@ const nowPlaying = (client, state) => {
     getMatch(players, matchId).then(handleTeams);
   };
 
-  const handleTeams = ({ matchId, teams }) => {
-    const match = state.get('matches')[matchId] || { id: matchId, message: null };
+  const handleTeams = ({ teams, playing, matchData }) => {
+    const match = state.get('matches')[matchData.id] || { id: matchData.id, message: null };
 
+    match.isFinished = !teams[0].win && !teams[0].lose ? false : true;
     const options = {
-      color: !teams[0].win && !teams[0].lose ? 0xFFFFFF : (teams[0].win ? 0x4CAF50 : 0xF44336),
+      color: !match.isFinished ? 0xFFFFFF : (teams[0].win ? 0x4CAF50 : 0xF44336),
       title: `${teams[0].title} vs ${teams[1].title}`,
       description: '------------------------------------------------------------',
       fields: [
@@ -57,14 +58,36 @@ const nowPlaying = (client, state) => {
           name: teams[1].title,
           value: _.values(_.mapValues(teams[1].players, 'name')).join('\n').replace('*', '\\*').replace('_', '\\_'),
           inline: true
+        }, {
+          name: 'Map',
+          value: matchData.voted_entities.map.name,
+        }, {
+          name: 'Started',
+          value: (new Date(matchData.started_at)).toLocaleDateString('en-US', {
+            timeZone: 'America/Chicago',
+            hour12: true,
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric'
+          })
         }
       ]
     };
 
-    if (match.message === undefined) {
+    const playingList = _.filter(teams[0].players, (o) => {
+      return playing.indexOf(o.id) !== -1;
+    });
+
+    const messageText = _.values(_.mapValues(playingList, 'name')).join(', ') +
+      (!match.isFinished ? ' is currently playing a match' : (teams[0].win ?
+        'has won the match' : ' has lost the match'
+      ));
+
+    if (match.message === undefined || match.message === null) {
       match.message = 'pending';
 
-      channel.send('', new Discord.RichEmbed(options)).then((message) => {
+      channel.send(messageText, new Discord.RichEmbed(options)).then((message) => {
         match.isFinished = !teams[0].win && !teams[0].lose ? false : true;
         match.message = message;
         match.lastUpdate = +new Date();
@@ -75,10 +98,9 @@ const nowPlaying = (client, state) => {
         return;
       }
 
-      match.message.edit('', new Discord.RichEmbed(options));
+      match.message.edit(messageText, new Discord.RichEmbed(options));
     }
 
-    match.isFinished = !teams[0].win && !teams[0].lose ? false : true;
     match.lastUpdate = +new Date();
     state.updateMatch(match);
   };
