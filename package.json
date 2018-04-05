@@ -1,0 +1,30 @@
+{
+  "name": "toybot",
+  "version": "1.0.0",
+  "description": "nothing useful",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jung35/ToyBot.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jung35/ToyBot/issues"
+  },
+  "homepage": "https://github.com/jung35/ToyBot#readme",
+  "dependencies": {
+    "discord.js": "^11.3.2",
+    "dotenv": "^5.0.1",
+    "eslint": "^4.19.1",
+    "lodash": "^4.17.5",
+    "superagent": "^3.8.2"
+  },
+  "config": {
+    "bin-links": false
+  }
+}
