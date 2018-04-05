@@ -42,13 +42,14 @@ const nowPlaying = (client, state) => {
   };
 
   const handleTeams = ({ teams, playing, matchData }) => {
-    const match = state.get('matches')[matchData.id] || { id: matchData.id, message: null };
+    const match = state.get('matches')[matchData.match_id] || { id: matchData.match_id, message: null };
 
     match.isFinished = !teams[0].win && !teams[0].lose ? false : true;
     const options = {
       color: !match.isFinished ? 0xFFFFFF : (teams[0].win ? 0x4CAF50 : 0xF44336),
       title: `${teams[0].title} vs ${teams[1].title}`,
       description: '------------------------------------------------------------',
+      url: `https://www.faceit.com/en/csgo/room/${matchData.match_id}`,
       fields: [
         {
           name: teams[0].title,
@@ -60,7 +61,7 @@ const nowPlaying = (client, state) => {
           inline: true
         }, {
           name: 'Map',
-          value: matchData.voted_entities.map.name,
+          value: matchData.voted_entities[0].map.name,
         }, {
           name: 'Started',
           value: (new Date(matchData.started_at)).toLocaleDateString('en-US', {
@@ -79,9 +80,9 @@ const nowPlaying = (client, state) => {
       return playing.indexOf(o.id) !== -1;
     });
 
-    const messageText = _.values(_.mapValues(playingList, 'name')).join(', ') +
+    const messageText = '**' + _.values(_.mapValues(playingList, 'name')).join('**, **') + '**' +
       (!match.isFinished ? ' is currently playing a match' : (teams[0].win ?
-        'has won the match' : ' has lost the match'
+        ' has won the match!' : ' has lost the match :('
       ));
 
     if (match.message === undefined || match.message === null) {

@@ -2,7 +2,7 @@ const _ = require('lodash');
 let block = false;
 
 const state = {
-  nowPlayingChannelId: '431262422398009344',
+  nowPlayingChannelId: '431354359700389889',
   players: [],
   matches: {},
   lastUpdate: 0,
