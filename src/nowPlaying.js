@@ -44,6 +44,15 @@ const nowPlaying = (client, state) => {
   const handleTeams = ({ teams, playing, matchData }) => {
     const match = state.get('matches')[matchData.match_id] || { id: matchData.match_id, message: null };
 
+    const dateOptions = {
+      timeZone: 'America/Chicago',
+      hour12: true,
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric'
+    };
+
     match.isFinished = !teams[0].win && !teams[0].lose ? false : true;
     const options = {
       color: !match.isFinished ? 0xFFFFFF : (teams[0].win ? 0x4CAF50 : 0xF44336),
@@ -64,17 +73,17 @@ const nowPlaying = (client, state) => {
           value: matchData.voted_entities[0].map.name,
         }, {
           name: 'Started',
-          value: (new Date(matchData.started_at)).toLocaleDateString('en-US', {
-            timeZone: 'America/Chicago',
-            hour12: true,
-            month: 'long',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric'
-          })
+          value: (new Date(matchData.started_at)).toLocaleDateString('en-US', dateOptions)
         }
       ]
     };
+
+    if (match.isFinished) {
+      options.fields.push({
+        name: 'Ended',
+        value: (new Date(matchData.finished_at)).toLocaleDateString('en-US', dateOptions)
+      });
+    }
 
     const playingList = _.filter(teams[0].players, (o) => {
       return playing.indexOf(o.id) !== -1;
