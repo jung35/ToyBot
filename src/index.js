@@ -27,14 +27,14 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-getTeam(state).then((players) => {
-  state.set('players', players);
-});
+if (login()) {
+  getTeam(state).then((players) => {
+    state.set('players', players);
+  });
 
-nowPlaying(client, state);
-
-setInterval(() => {
   nowPlaying(client, state);
-}, 1000);
 
-login();
+  setInterval(() => {
+    nowPlaying(client, state);
+  }, 1000);
+}
