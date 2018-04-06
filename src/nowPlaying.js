@@ -95,7 +95,7 @@ const nowPlaying = (client, state) => {
         return 'lose';
       }
 
-      if (match.isFinished) {
+      if (match.isFinished && matchData.finished_at !== null) {
         return 'finished';
       }
 
