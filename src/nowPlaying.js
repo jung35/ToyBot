@@ -82,7 +82,7 @@ const nowPlaying = (client, state) => {
       state.updateMatch(match);
     }
 
-    match.isFinished = matchData.state !== 'ongoing';
+    match.isFinished = matchData.state !== 'ongoing' && matchData.state !== 'ready';
     match.isWinner = matchData.winner === teams[0].faction;
     match.isLoser = matchData.loser === teams[0].faction;
 
