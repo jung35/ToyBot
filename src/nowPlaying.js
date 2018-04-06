@@ -105,7 +105,7 @@ const nowPlaying = (client, state) => {
     const matchColors = {
       win: 0x4CAF50,
       lose: 0xF44336,
-      finshed: 0x000000,
+      finished: 0x000000,
       ongoing: 0xFFFFFF
     };
 
@@ -184,7 +184,7 @@ const nowPlaying = (client, state) => {
     const matchMessage = {
       win: ' has won their match!',
       lose: ' has lost their match :(',
-      finshed: ' has ended their match..?',
+      finished: ' has ended their match..?',
       ongoing: ' is currently playing a match!'
     };
 
