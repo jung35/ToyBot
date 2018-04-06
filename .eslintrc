@@ -11,7 +11,8 @@
     "require": true,
     "module": true,
     "setInterval": true,
-    "Promise": true
+    "Promise": true,
+    "setTimeout": true
   },
   "rules": {
     "indent": [

@@ -33,8 +33,4 @@ if (login()) {
   });
 
   nowPlaying(client, state);
-
-  setInterval(() => {
-    nowPlaying(client, state);
-  }, 1000);
 }

@@ -1,9 +1,8 @@
 const _ = require('lodash');
-let block = false;
 
 const state = {
-  nowPlayingChannelId: '431354359700389889',
-  players: [],
+  nowPlayingChannelId: process.env.CHANNEL_ID,
+  players: {},
   matches: {},
   lastUpdate: 0,
 };
@@ -13,27 +12,56 @@ const get = (key) => {
 };
 
 const set = (key, val) => {
-  doBlock();
-
-  block = true;
   state[key] = val;
-  block = false;
 };
 
 const updateMatch = (match) => {
-  doBlock();
-
-  block = true;
-  state['matches'][match.id] = _.merge(state['matches'][match.id], match);
-  block = false;
+  state.matches[match.id] = _.merge(state['matches'][match.id], match);
 };
 
-const doBlock = () => {
-  while (block) {
-    if (!block) {
-      break;
-    }
+const setMatchUpdate = (matchId) => {
+  if (state.matches[matchId] === undefined) {
+    state.matches[matchId] = { id: matchId };
   }
+  state.matches[matchId].lastUpdate = +new Date();
 };
 
-module.exports = { set, get, updateMatch };
+const canUpdateMatch = (matchId) => {
+  if (state.matches[matchId] === undefined ||
+    state.matches[matchId].lastUpdate === undefined
+  ) {
+    state.matches[matchId] = { id: matchId, lastUpdate: 0 };
+
+    return true;
+  }
+
+  if (+new Date() - state.matches[matchId].lastUpdate < 1000 * 30) {
+    return false;
+  }
+
+  return true;
+};
+
+const setPlayerUpdate = (playerId) => {
+  state.players[playerId].lastUpdate = +new Date();
+};
+
+const canUpdatePlayer = (playerId) => {
+  if (state.players[playerId] === undefined ||
+    state.players[playerId].lastUpdate === undefined
+  ) {
+    return true;
+  }
+
+  if (+new Date() - state.players[playerId].lastUpdate < 1000 * 30) {
+    return false;
+  }
+
+  return true;
+};
+
+module.exports = {
+  set, get,
+  updateMatch, canUpdateMatch, setMatchUpdate,
+  setPlayerUpdate, canUpdatePlayer
+};

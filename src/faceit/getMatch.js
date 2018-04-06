@@ -5,6 +5,8 @@ const FACEIT_KEY = process.env.FACEIT_KEY || null;
 const FACEIT_URL = process.env.FACEIT_URL;
 
 const getMatch = (players, matchId) => {
+  console.log(`[API_CALL:GET]getMatch match:${matchId}`);
+
   return new Promise((resolve, reject) => {
     request
       .get(`${FACEIT_URL}/matches/${matchId}`)
@@ -13,12 +15,15 @@ const getMatch = (players, matchId) => {
         if (err) {
           reject(err);
 
-          return console.error(`getMatch[${matchId}] ERROR: ${err}`);
+          return console.error(`[API_CALL:REJECT]getMatch match:${matchId} error:${err}`);
         }
 
+        console.log(`[API_CALL:RESOLVE]getMatch match:${matchId}`);
         const match = res.body.data;
 
         if (match.game_type !== 'QuickMatch') {
+          console.log(`[NOT_QUICK_MATCH]getMatch match:${matchId}`);
+
           return resolve(null);
         }
 
@@ -59,15 +64,13 @@ const getMatch = (players, matchId) => {
         const faction1Data = {
           title: match.faction1_nickname,
           players: faction1,
-          win: match.winner === 'faction1',
-          lose: match.winner === 'faction2',
+          faction: 'faction1',
         };
 
         const faction2Data = {
           title: match.faction2_nickname,
           players: faction2,
-          win: match.winner === 'faction2',
-          lose: match.winner === 'faction1',
+          faction: 'faction2',
         };
 
         let teams = [faction1Data, faction2Data];

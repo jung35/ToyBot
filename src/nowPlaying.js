@@ -3,10 +3,23 @@ const getMatch = require('./faceit/getMatch');
 const Discord = require('discord.js');
 const _ = require('lodash');
 
-const nowPlaying = (client, state) => {
-  let queue = 0;
+let block = false;
 
-  if (state.get('nowPlayingChannel') === null && state.get('players').length === 0) {
+const nowPlaying = (client, state) => {
+  setTimeout(() => {
+    nowPlaying(client, state);
+  }, 1000);
+
+  if (block) {
+    return;
+  }
+
+
+  if (state.get('nowPlayingChannel') === null) {
+    return;
+  }
+
+  if (Object.keys(state.get('players')).length === 0) {
     return;
   }
 
@@ -16,128 +29,197 @@ const nowPlaying = (client, state) => {
     return;
   }
 
-  const handleMatch = (matchId) => {
-    queue--;
-    if (matchId === null) {
-      return;
+  block = true;
+
+  const playerIds = Object.keys(state.get('players'));
+  const parsePlayer = () => {
+    const playerId = playerIds.pop();
+    if (playerId === undefined) {
+      block = false;
+
+      return false;
     }
 
-    if (matchId === undefined) {
-      return;
+    if (!state.canUpdatePlayer(playerId)) {
+      return parsePlayer();
     }
 
-    state.updateMatch({ id: matchId });
-
-    if (queue > 0) {
-      return;
-    }
-
-    const oldMatch = state.get('matches')[matchId];
-
-    if (oldMatch !== undefined && oldMatch.lastUpdate && (+new Date()) - oldMatch.lastUpdate < 1000 * 30) {
-      return;
-    }
-
-    getMatch(players, matchId).then(handleTeams);
+    state.setPlayerUpdate(playerId);
+    getPlayer(state.get('players')[playerId])
+      .then(handleMatch)
+      .catch(() => parsePlayer());
   };
 
-  const handleTeams = ({ teams, playing, matchData }) => {
-    const match = state.get('matches')[matchData.match_id] || { id: matchData.match_id, message: null };
+  const handleMatch = (matchId) => {
+    if (matchId === null || !state.canUpdateMatch(matchId)) {
+      return parsePlayer();
+    }
 
-    const dateOptions = {
-      timeZone: 'America/Chicago',
-      hour12: true,
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric'
+    state.setMatchUpdate(matchId);
+    getMatch(state.get('players'), matchId)
+      .then(handleTeams)
+      .catch(() => parsePlayer());
+  };
+
+  const handleTeams = (props) => {
+    if (props === null) {
+      return parsePlayer();
+    }
+
+    const { teams, playing, matchData, dontParsePlayer = false } = props;
+    const match = state.get('matches')[matchData.match_id] || { id: matchData.match_id };
+
+    if (match.message === 'pending') {
+      if (dontParsePlayer) {
+        return;
+      }
+
+      return parsePlayer();
+    }
+
+    if (match.message === undefined) {
+      match.message = 'pending';
+      state.updateMatch(match);
+    }
+
+    match.isFinished = matchData.state !== 'ongoing';
+    match.isWinner = matchData.winner === teams[0].faction;
+    match.isLoser = matchData.loser === teams[0].faction;
+
+    const getMatchType = (match) => {
+      if (match.isWinner) {
+        return 'win';
+      }
+
+      if (match.isLoser) {
+        return 'lose';
+      }
+
+      if (match.isFinished) {
+        return 'finished';
+      }
+
+      return 'ongoing';
     };
 
-    match.isFinished = !teams[0].win && !teams[0].lose ? false : true;
+    const matchColors = {
+      win: 0x4CAF50,
+      lose: 0xF44336,
+      finshed: 0x000000,
+      ongoing: 0xFFFFFF
+    };
+
+    const parseDate = (time) => {
+      const dateOptions = {
+        timeZone: 'America/Chicago',
+        hour12: true,
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric'
+      };
+
+      return (new Date(time)).toLocaleDateString('en-US', dateOptions);
+    };
+
+    const parsePlayerList = (players) => {
+      return _.values(_.mapValues(players, 'name'))
+        .join('\n')
+        .replace('*', '\\*')
+        .replace('_', '\\_')
+        .replace('`', '\\`');
+    };
+
     const options = {
-      color: !match.isFinished ? 0xFFFFFF : (teams[0].win ? 0x4CAF50 : 0xF44336),
+      color: matchColors[getMatchType(match)],
       title: `${teams[0].title} vs ${teams[1].title}`,
-      description: '------------------------------------------------------------',
+      description: '-------------------------------------------------------------------------------------------------',
       url: `https://www.faceit.com/en/csgo/room/${matchData.match_id}`,
       fields: [
         {
           name: teams[0].title,
-          value: _.values(_.mapValues(teams[0].players, 'name')).join('\n').replace('*', '\\*').replace('_', '\\_'),
+          value: parsePlayerList(teams[0].players),
           inline: true
         }, {
           name: teams[1].title,
-          value: _.values(_.mapValues(teams[1].players, 'name')).join('\n').replace('*', '\\*').replace('_', '\\_'),
+          value: parsePlayerList(teams[1].players),
           inline: true
         }, {
           name: 'Map',
           value: matchData.voted_entities[0].map.name,
+          inline: true
         }, {
-          name: 'Started',
-          value: (new Date(matchData.started_at)).toLocaleDateString('en-US', dateOptions)
+          name: 'Start Time',
+          value: parseDate(matchData.started_at),
+          inline: true
         }
       ]
     };
 
     if (match.isFinished) {
       options.fields.push({
-        name: 'Ended',
-        value: (new Date(matchData.finished_at)).toLocaleDateString('en-US', dateOptions)
+        name: 'End Time',
+        value: parseDate(matchData.finished_at),
+        inline: true
       });
     }
+
+    options.fields.push();
 
     const playingList = _.filter(teams[0].players, (o) => {
       return playing.indexOf(o.id) !== -1;
     });
 
-    const messageText = '**' + _.values(_.mapValues(playingList, 'name')).join('**, **') + '**' +
-      (!match.isFinished ? ' is currently playing a match' : (teams[0].win ?
-        ' has won the match!' : ' has lost the match :('
-      ));
+    // Lets not call API too much
+    _.map(playingList, (playingPlayer) => {
+      state.setPlayerUpdate(playingPlayer.id);
+    });
 
-    if (match.message === undefined || match.message === null) {
-      match.message = 'pending';
+    const matchMessage = {
+      win: ' has won their match!',
+      lose: ' has lost their match :(',
+      finshed: ' has ended their match..?',
+      ongoing: ' is currently playing a match!'
+    };
 
+    const playingJoinedList = '**' + _.values(_.mapValues(playingList, 'name')).join('**, **') + '**';
+    const messageText = playingJoinedList + matchMessage[getMatchType(match)];
+
+    if (match.message === 'pending') {
       channel.send(messageText, new Discord.RichEmbed(options)).then((message) => {
-        match.isFinished = !teams[0].win && !teams[0].lose ? false : true;
         match.message = message;
-        match.lastUpdate = +new Date();
         state.updateMatch(match);
+
+        if (dontParsePlayer) {
+          return;
+        }
+
+        parsePlayer();
       });
     } else {
-      if (match.message === 'pending') {
+      match.message.edit(messageText, new Discord.RichEmbed(options));
+
+      if (dontParsePlayer) {
         return;
       }
 
-      match.message.edit(messageText, new Discord.RichEmbed(options));
+      parsePlayer();
     }
-
-    match.lastUpdate = +new Date();
-    state.updateMatch(match);
   };
 
-  const players = state.get('players');
+  _.map(state.get('matches'), (match) => {
+    if (!state.canUpdateMatch(match.id) || match.isFinished) {
+      return;
+    }
 
-  if (+new Date() - state.get('lastUpdate') > 1000 * 30) {
-    players.map((player) => {
-      queue++;
-      getPlayer(player).then(handleMatch);
+    state.setMatchUpdate(match.id);
+    getMatch(state.get('players'), match.id).then((props) => {
+      props.dontParsePlayer = true;
+      handleTeams(props);
     });
-
-    state.set('lastUpdate', +new Date());
-  }
-
-  const matches = state.get('matches');
-  _.map(matches, (match) => {
-    if (match !== undefined && match.lastUpdate && (+new Date()) - match.lastUpdate < 1000 * 30) {
-      return;
-    }
-
-    if (match.isFinished) {
-      return;
-    }
-
-    getMatch(players, match.id).then(handleTeams);
   });
+
+  parsePlayer();
 };
 
 module.exports = nowPlaying;
