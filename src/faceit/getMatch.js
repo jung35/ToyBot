@@ -1,11 +1,12 @@
 const request = require('superagent');
 const _ = require('lodash');
+const Logger = require('../Logger');
 
 const FACEIT_KEY = process.env.FACEIT_KEY || null;
 const FACEIT_URL = process.env.FACEIT_URL;
 
 const getMatch = (players, matchId) => {
-  console.log(`[API_CALL:GET]getMatch match:${matchId}`);
+  Logger.log(`[API_CALL:GET]getMatch match:${matchId}`);
 
   return new Promise((resolve, reject) => {
     request
@@ -15,14 +16,14 @@ const getMatch = (players, matchId) => {
         if (err) {
           reject(err);
 
-          return console.error(`[API_CALL:REJECT]getMatch match:${matchId} error:${err}`);
+          return Logger.error(`[API_CALL:REJECT]getMatch match:${matchId} error:${err}`);
         }
 
-        console.log(`[API_CALL:RESOLVE]getMatch match:${matchId}`);
+        Logger.log(`[API_CALL:RESOLVE]getMatch match:${matchId}`);
         const match = res.body.data;
 
         if (match.game_type !== 'QuickMatch') {
-          console.log(`[NOT_QUICK_MATCH]getMatch match:${matchId}`);
+          Logger.log(`[NOT_QUICK_MATCH]getMatch match:${matchId}`);
 
           return resolve(null);
         }

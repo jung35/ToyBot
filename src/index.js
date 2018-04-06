@@ -1,9 +1,12 @@
 require('dotenv').config();
 const Discord = require('discord.js');
+const Logger = require('./Logger');
+
 const state = require('./state');
 
 const getTeam = require('./faceit/getTeam');
 const nowPlaying = require('./nowPlaying');
+
 
 const BOT_TOKEN = process.env.BOT_TOKEN || null;
 const FACEIT_KEY = process.env.FACEIT_KEY || null;
@@ -14,7 +17,7 @@ const client = new Discord.Client();
 
 const login = () => {
   if (BOT_TOKEN === null || FACEIT_KEY === null || FACEIT_URL === null) {
-    console.error('BOT_TOKEN or/and FACEIT_KEY missing. exiting.');
+    Logger.error('BOT_TOKEN or/and FACEIT_KEY missing. exiting.');
 
     return false;
   }
@@ -24,7 +27,7 @@ const login = () => {
 };
 
 client.on('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+  Logger.log(`Logged in as ${client.user.tag}!`);
 });
 
 if (login()) {

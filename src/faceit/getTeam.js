@@ -1,11 +1,12 @@
 const request = require('superagent');
+const Logger = require('../Logger');
 
 const FACEIT_KEY = process.env.FACEIT_KEY || null;
 const TEAM_ID = process.env.TEAM_ID || null;
 const FACEIT_URL = process.env.FACEIT_URL;
 
 const getTeam = () => {
-  console.log('[API_CALL:GET]getTeam');
+  Logger.log('[API_CALL:GET]getTeam');
 
   return new Promise((resolve, reject) => {
     request
@@ -15,12 +16,12 @@ const getTeam = () => {
         if (err) {
           reject(err);
 
-          return console.error(`[API_CALL:REJECT]getTeam error:${err}`);
+          return Logger.error(`[API_CALL:REJECT]getTeam error:${err}`);
         }
 
         const team = res.body.data;
 
-        console.log(`[API_CALL:RESOLVE]getTeam team:${team.nickname}`);
+        Logger.log(`[API_CALL:RESOLVE]getTeam team:${team.nickname}`);
 
         const players = {};
 
@@ -34,7 +35,7 @@ const getTeam = () => {
           };
         });
 
-        console.log('[PLAYERS]', Object.keys(players));
+        Logger.log('[PLAYERS]', Object.keys(players));
 
         resolve(players);
       });
