@@ -162,6 +162,12 @@ const nowPlaying = (client, state) => {
         value: parseDate(matchData.finished_at),
         inline: true
       });
+
+      options.fields.push({
+        name: '\u200b',
+        value: '\u200b',
+        inline: true
+      });
     }
 
     options.fields.push();
