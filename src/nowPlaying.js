@@ -149,6 +149,9 @@ const nowPlaying = (client, state) => {
           value: matchData.voted_entities[0].map.name,
           inline: true
         }, {
+          name: '\u200b',
+          value: '-------------------------------------------------------------------------------------------------',
+        }, {
           name: 'Start Time',
           value: parseDate(matchData.started_at),
           inline: true
@@ -170,7 +173,10 @@ const nowPlaying = (client, state) => {
       });
     }
 
-    options.fields.push();
+    options.fields.push({
+      name: '\u200b',
+      value: '\u200b',
+    });
 
     const playingList = _.filter(teams[0].players, (o) => {
       return playing.indexOf(o.id) !== -1;
