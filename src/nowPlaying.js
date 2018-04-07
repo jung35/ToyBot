@@ -3,6 +3,11 @@ const getMatch = require('./faceit/getMatch');
 const Discord = require('discord.js');
 const _ = require('lodash');
 
+const MATCH_WIN = 'win';
+const MATCH_LOSE = 'lose';
+const MATCH_FINISH = 'finish';
+const MATCH_ONGOING = 'ongoing';
+
 let block = false;
 
 const nowPlaying = (client, state) => {
@@ -38,7 +43,7 @@ const nowPlaying = (client, state) => {
       block = false;
 
       _.map(state.get('matches'), (match) => {
-        if (!state.canUpdateMatch(match.id) || match.isFinished) {
+        if (!state.canUpdateMatch(match.id) || getMatchType(match) === 'finished') {
           return;
         }
 
@@ -102,31 +107,16 @@ const nowPlaying = (client, state) => {
       state.updateMatch(match);
     }
 
+    match.finshedAt = matchData.finished_at;
     match.isFinished = matchData.state !== 'ongoing' && matchData.state !== 'ready';
     match.isWinner = matchData.winner === teams[0].faction;
     match.isLoser = matchData.loser === teams[0].faction;
 
-    const getMatchType = (match) => {
-      if (match.isWinner) {
-        return 'win';
-      }
-
-      if (match.isLoser) {
-        return 'lose';
-      }
-
-      if (match.isFinished && matchData.finished_at !== null) {
-        return 'finished';
-      }
-
-      return 'ongoing';
-    };
-
     const matchColors = {
-      win: 0x4CAF50,
-      lose: 0xF44336,
-      finished: 0x000000,
-      ongoing: 0xFFFFFF
+      [MATCH_WIN]: 0x4CAF50,
+      [MATCH_LOSE]: 0xF44336,
+      [MATCH_FINISH]: 0x000000,
+      [MATCH_ONGOING]: 0xFFFFFF
     };
 
     const parseDate = (time) => {
@@ -179,10 +169,10 @@ const nowPlaying = (client, state) => {
       ]
     };
 
-    if (match.isFinished) {
+    if (getMatchType(match) === MATCH_FINISH && match.finishedAt !== null) {
       options.fields.push({
         name: 'End Time',
-        value: parseDate(matchData.finished_at),
+        value: parseDate(match.finishedAt),
         inline: true
       });
 
@@ -208,10 +198,10 @@ const nowPlaying = (client, state) => {
     });
 
     const matchMessage = {
-      win: ' has won their match!',
-      lose: ' has lost their match :(',
-      finished: ' has ended their match..?',
-      ongoing: ' is currently playing a match!'
+      [MATCH_WIN]: ' has won their match!',
+      [MATCH_LOSE]: ' has lost their match :(',
+      [MATCH_FINISH]: ' has ended their match..?',
+      [MATCH_ONGOING]: ' is currently playing a match!'
     };
 
     const playingJoinedList = '**' + _.values(_.mapValues(playingList, 'name')).join('**, **') + '**';
@@ -237,6 +227,22 @@ const nowPlaying = (client, state) => {
 
       parsePlayer();
     }
+  };
+
+  const getMatchType = (match) => {
+    if (match.isWinner) {
+      return MATCH_WIN;
+    }
+
+    if (match.isLoser) {
+      return MATCH_LOSE;
+    }
+
+    if (match.isFinished && match.finishedAt !== null) {
+      return MATCH_FINISH;
+    }
+
+    return MATCH_ONGOING;
   };
 
   parsePlayer();
