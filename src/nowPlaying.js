@@ -2,6 +2,7 @@ const getPlayer = require('./faceit/getPlayer');
 const getMatch = require('./faceit/getMatch');
 const Discord = require('discord.js');
 const _ = require('lodash');
+const Logger = require('./Logger');
 
 const MATCH_WIN = 'win';
 const MATCH_LOSE = 'lose';
@@ -73,7 +74,11 @@ const nowPlaying = (client, state) => {
     state.setPlayerUpdate(playerId);
     getPlayer(state.get('players')[playerId])
       .then(handleMatch)
-      .catch(() => parsePlayer());
+      .catch((err) => {
+        Logger.log(`[CATCH] getPlayer err:${err}`);
+
+        parsePlayer();
+      });
   };
 
   const handleMatch = (matchId) => {
@@ -84,7 +89,18 @@ const nowPlaying = (client, state) => {
     state.setMatchUpdate(matchId);
     getMatch(state.get('players'), matchId)
       .then(handleTeams)
-      .catch(() => parsePlayer());
+      .catch((err) => {
+        Logger.log(`[CATCH] getMatch err:${err}`);
+
+        const match = state.get('matches')[matchId];
+
+        if (match.message === 'pending' || match.message === undefined) {
+          Logger.log('[CATCH] getMatch: Match message found to be pending/undefined. Attempt to refetch message.');
+          state.updateMatch({ id: matchId });
+        }
+
+        parsePlayer();
+      });
   };
 
   const handleTeams = (props) => {
