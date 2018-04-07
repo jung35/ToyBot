@@ -37,6 +37,22 @@ const nowPlaying = (client, state) => {
     if (playerId === undefined) {
       block = false;
 
+      _.map(state.get('matches'), (match) => {
+        if (!state.canUpdateMatch(match.id) || match.isFinished) {
+          return;
+        }
+
+        state.setMatchUpdate(match.id);
+        getMatch(state.get('players'), match.id).then((props) => {
+          if (props === null) {
+            props = {};
+          }
+
+          props.dontParsePlayer = true;
+          handleTeams(props);
+        });
+      });
+
       return false;
     }
 
@@ -78,6 +94,10 @@ const nowPlaying = (client, state) => {
     }
 
     if (match.message === undefined) {
+      if (dontParsePlayer) {
+        return;
+      }
+
       match.message = 'pending';
       state.updateMatch(match);
     }
@@ -218,18 +238,6 @@ const nowPlaying = (client, state) => {
       parsePlayer();
     }
   };
-
-  _.map(state.get('matches'), (match) => {
-    if (!state.canUpdateMatch(match.id) || match.isFinished) {
-      return;
-    }
-
-    state.setMatchUpdate(match.id);
-    getMatch(state.get('players'), match.id).then((props) => {
-      props.dontParsePlayer = true;
-      handleTeams(props);
-    });
-  });
 
   parsePlayer();
 };
