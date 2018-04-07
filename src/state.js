@@ -1,7 +1,7 @@
 const _ = require('lodash');
 
 // minimum require interval before calling api again in seconds
-const delay = 60;
+const delay = 20;
 
 const state = {
   nowPlayingChannelId: process.env.CHANNEL_ID,

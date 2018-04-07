@@ -7,18 +7,21 @@ const MATCH_WIN = 'win';
 const MATCH_LOSE = 'lose';
 const MATCH_FINISH = 'finish';
 const MATCH_ONGOING = 'ongoing';
+const MATCH_CANCEL = 'cancel';
+
+const MATCH_CONSIDERED_ONGOING = ['voting', 'configuring', 'ready', 'ongoing'];
+const MATCH_CONSIDERED_END = [MATCH_WIN, MATCH_LOSE, MATCH_FINISH, MATCH_CANCEL];
 
 let block = false;
 
 const nowPlaying = (client, state) => {
   setTimeout(() => {
     nowPlaying(client, state);
-  }, 1000);
+  }, 100);
 
   if (block) {
     return;
   }
-
 
   if (state.get('nowPlayingChannel') === null) {
     return;
@@ -43,7 +46,9 @@ const nowPlaying = (client, state) => {
       block = false;
 
       _.map(state.get('matches'), (match) => {
-        if (!state.canUpdateMatch(match.id) || getMatchType(match) === 'finished') {
+        if (!state.canUpdateMatch(match.id) ||
+          [MATCH_FINISH, MATCH_WIN, MATCH_LOSE].indexOf(getMatchType(match)) !== -1
+        ) {
           return;
         }
 
@@ -88,6 +93,7 @@ const nowPlaying = (client, state) => {
     }
 
     const { teams, playing, matchData, dontParsePlayer = false } = props;
+
     const match = state.get('matches')[matchData.match_id] || { id: matchData.match_id };
 
     if (match.message === 'pending') {
@@ -107,12 +113,13 @@ const nowPlaying = (client, state) => {
       state.updateMatch(match);
     }
 
-    match.finshedAt = matchData.finished_at;
-    match.isFinished = matchData.state !== 'ongoing' && matchData.state !== 'ready';
+    match.isCancelled = matchData.state === 'cancelled';
+    match.isFinished = MATCH_CONSIDERED_ONGOING.indexOf(matchData.state) === -1;
     match.isWinner = matchData.winner === teams[0].faction;
     match.isLoser = matchData.loser === teams[0].faction;
 
     const matchColors = {
+      [MATCH_CANCEL]: 0xFF9800,
       [MATCH_WIN]: 0x4CAF50,
       [MATCH_LOSE]: 0xF44336,
       [MATCH_FINISH]: 0x000000,
@@ -156,7 +163,7 @@ const nowPlaying = (client, state) => {
           inline: true
         }, {
           name: 'Map',
-          value: matchData.voted_entities[0].map.name,
+          value: matchData.voted_entities === null ? 'voting...' : matchData.voted_entities[0].map.name,
           inline: true
         }, {
           name: '\u200b',
@@ -169,10 +176,10 @@ const nowPlaying = (client, state) => {
       ]
     };
 
-    if (getMatchType(match) === MATCH_FINISH && match.finishedAt !== null) {
+    if (MATCH_CONSIDERED_END.indexOf(getMatchType(match)) !== -1) {
       options.fields.push({
         name: 'End Time',
-        value: parseDate(match.finishedAt),
+        value: parseDate(matchData.finished_at),
         inline: true
       });
 
@@ -198,10 +205,11 @@ const nowPlaying = (client, state) => {
     });
 
     const matchMessage = {
-      [MATCH_WIN]: ' has won their match!',
-      [MATCH_LOSE]: ' has lost their match :(',
-      [MATCH_FINISH]: ' has ended their match..?',
-      [MATCH_ONGOING]: ' is currently playing a match!'
+      [MATCH_CANCEL]: ' had their match cancelled.',
+      [MATCH_WIN]: ' won their match!',
+      [MATCH_LOSE]: ' lost their match :(',
+      [MATCH_FINISH]: ' ended their match..?',
+      [MATCH_ONGOING]: ' is currently playing a match!',
     };
 
     const playingJoinedList = '**' + _.values(_.mapValues(playingList, 'name')).join('**, **') + '**';
@@ -230,6 +238,10 @@ const nowPlaying = (client, state) => {
   };
 
   const getMatchType = (match) => {
+    if (match.isCancelled) {
+      return MATCH_CANCEL;
+    }
+
     if (match.isWinner) {
       return MATCH_WIN;
     }
@@ -238,7 +250,7 @@ const nowPlaying = (client, state) => {
       return MATCH_LOSE;
     }
 
-    if (match.isFinished && match.finishedAt !== null) {
+    if (match.isFinished) {
       return MATCH_FINISH;
     }
 
