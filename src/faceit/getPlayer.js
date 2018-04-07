@@ -5,7 +5,7 @@ const FACEIT_KEY = process.env.FACEIT_KEY || null;
 const FACEIT_URL = process.env.FACEIT_URL;
 
 const getPlayer = (player) => {
-  Logger.log(`[API_CALL:GET]getPlayer player:${player.name}`);
+  Logger.log('GET_PLAYER', 'GET', `player: ${player.name}`);
 
   return new Promise((resolve, reject) => {
     request
@@ -15,10 +15,10 @@ const getPlayer = (player) => {
         if (err) {
           reject(err);
 
-          return Logger.error(`[API_CALL:REJECT]getPlayer player:${player.name} error:${err}`);
+          return Logger.error('GET_PLAYER', 'REJECT', `player: ${player.name} error: ${err}`);
         }
 
-        Logger.log(`[API_CALL:RESOLVE]getPlayer player:${player.name}`);
+        Logger.log('GET_PLAYER', 'RESOLVE', `player: ${player.name}`);
 
         const room = res.body.data.ongoing_rooms;
         const roomIds = Object.keys(room);
@@ -28,7 +28,7 @@ const getPlayer = (player) => {
         }
 
         const matchId = Object.keys(room)[0];
-        Logger.log(`[FOUND_MATCH]getPlayer match:${matchId}`);
+        Logger.log('GET_PLAYER', 'FOUND_MATCH', `match: ${matchId}`);
 
         resolve(matchId);
       });

@@ -75,7 +75,7 @@ const nowPlaying = (client, state) => {
     getPlayer(state.get('players')[playerId])
       .then(handleMatch)
       .catch((err) => {
-        Logger.log(`[CATCH] getPlayer err:${err}`);
+        Logger.error('GET_PLAYER', 'CATCH', `err: ${err}`);
 
         parsePlayer();
       });
@@ -90,12 +90,12 @@ const nowPlaying = (client, state) => {
     getMatch(state.get('players'), matchId)
       .then(handleTeams)
       .catch((err) => {
-        Logger.log(`[CATCH] getMatch err:${err}`);
+        Logger.error('GET_MATCH', 'CATCH', `err: ${err}`);
 
         const match = state.get('matches')[matchId];
 
         if (match.message === 'pending' || match.message === undefined) {
-          Logger.log('[CATCH] getMatch: Match message found to be pending/undefined. Attempt to refetch message.');
+          Logger.error('GET_MATCH', 'CATCH', 'Match message found to be pending. Attempt to refetch message.');
           state.updateMatch({ id: matchId });
         }
 
@@ -133,35 +133,6 @@ const nowPlaying = (client, state) => {
     match.isFinished = MATCH_CONSIDERED_ONGOING.indexOf(matchData.state) === -1;
     match.isWinner = matchData.winner === teams[0].faction;
     match.isLoser = matchData.loser === teams[0].faction;
-
-    const matchColors = {
-      [MATCH_CANCEL]: 0xFF9800,
-      [MATCH_WIN]: 0x4CAF50,
-      [MATCH_LOSE]: 0xF44336,
-      [MATCH_FINISH]: 0x000000,
-      [MATCH_ONGOING]: 0xFFFFFF
-    };
-
-    const parseDate = (time) => {
-      const dateOptions = {
-        timeZone: 'America/Chicago',
-        hour12: true,
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric'
-      };
-
-      return (new Date(time)).toLocaleDateString('en-US', dateOptions);
-    };
-
-    const parsePlayerList = (players) => {
-      return _.values(_.mapValues(players, 'name'))
-        .join('\n')
-        .replace('*', '\\*')
-        .replace('_', '\\_')
-        .replace('`', '\\`');
-    };
 
     const options = {
       color: matchColors[getMatchType(match)],
@@ -220,14 +191,6 @@ const nowPlaying = (client, state) => {
       state.setPlayerUpdate(playingPlayer.id);
     });
 
-    const matchMessage = {
-      [MATCH_CANCEL]: ' had their match cancelled.',
-      [MATCH_WIN]: ' won their match!',
-      [MATCH_LOSE]: ' lost their match :(',
-      [MATCH_FINISH]: ' ended their match..?',
-      [MATCH_ONGOING]: ' is currently playing a match!',
-    };
-
     const playingJoinedList = '**' + _.values(_.mapValues(playingList, 'name')).join('**, **') + '**';
     const messageText = playingJoinedList + matchMessage[getMatchType(match)];
 
@@ -253,27 +216,64 @@ const nowPlaying = (client, state) => {
     }
   };
 
-  const getMatchType = (match) => {
-    if (match.isCancelled) {
-      return MATCH_CANCEL;
-    }
+  parsePlayer();
+};
 
-    if (match.isWinner) {
-      return MATCH_WIN;
-    }
+const getMatchType = (match) => {
+  if (match.isCancelled) {
+    return MATCH_CANCEL;
+  }
 
-    if (match.isLoser) {
-      return MATCH_LOSE;
-    }
+  if (match.isWinner) {
+    return MATCH_WIN;
+  }
 
-    if (match.isFinished) {
-      return MATCH_FINISH;
-    }
+  if (match.isLoser) {
+    return MATCH_LOSE;
+  }
 
-    return MATCH_ONGOING;
+  if (match.isFinished) {
+    return MATCH_FINISH;
+  }
+
+  return MATCH_ONGOING;
+};
+
+const matchMessage = {
+  [MATCH_CANCEL]: ' had their match cancelled.',
+  [MATCH_WIN]: ' won their match!',
+  [MATCH_LOSE]: ' lost their match :(',
+  [MATCH_FINISH]: ' ended their match..?',
+  [MATCH_ONGOING]: ' is currently playing a match!',
+};
+
+const matchColors = {
+  [MATCH_CANCEL]: 0xFF9800,
+  [MATCH_WIN]: 0x4CAF50,
+  [MATCH_LOSE]: 0xF44336,
+  [MATCH_FINISH]: 0x000000,
+  [MATCH_ONGOING]: 0xFFFFFF
+};
+
+const parsePlayerList = (players) => {
+  return _.values(_.mapValues(players, 'name'))
+    .join('\n')
+    .replace('*', '\\*')
+    .replace('_', '\\_')
+    .replace('`', '\\`');
+};
+
+const parseDate = (time) => {
+  const dateOptions = {
+    timeZone: 'America/Chicago',
+    hour12: true,
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric'
   };
 
-  parsePlayer();
+  return (new Date(time)).toLocaleDateString('en-US', dateOptions);
 };
 
 module.exports = nowPlaying;

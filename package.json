@@ -18,10 +18,12 @@
   },
   "homepage": "https://github.com/jung35/ToyBot#readme",
   "dependencies": {
+    "bson-ext": "^2.0.0",
     "discord.js": "^11.3.2",
     "dotenv": "^5.0.1",
     "eslint": "^4.19.1",
     "lodash": "^4.17.5",
+    "mongodb": "^3.0.5",
     "superagent": "^3.8.2"
   },
   "config": {
