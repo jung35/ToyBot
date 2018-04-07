@@ -31,7 +31,7 @@ const print_log = (color, type, result, ...message) => {
 
   return [
     '\x1b[35m' + Logger.time() + color,
-    (Array(length).join(' ') + `[${type}:${result}]`).slice(-length) + '\x1b[0m',
+    (Array(length).join(' ') + `[${type}:${result}]`).slice(-length) + '\x1b[37m\x1b[2m',
     ...message,
     '\x1b[0m'
   ];
