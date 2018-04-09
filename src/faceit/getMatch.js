@@ -6,7 +6,7 @@ const FACEIT_KEY = process.env.FACEIT_KEY || null;
 const FACEIT_URL = process.env.FACEIT_URL;
 
 const getMatch = (players, matchId) => {
-  Logger.log('GET_MATCH', 'GET', 'match: ${matchId}');
+  Logger.log('GET_MATCH', 'GET', `match: ${matchId}`);
 
   return new Promise((resolve, reject) => {
     request
