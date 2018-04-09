@@ -20,8 +20,11 @@ const client = new Discord.Client();
 const login = () => {
 
   return new Promise((resolve, reject) => {
-    if ([DB_URL, DB_NAME, BOT_TOKEN, FACEIT_KEY, FACEIT_URL].indexOf(null) !== -1) {
-      Logger.error('ENV', 'MISSING', 'BOT_TOKEN or/and FACEIT_KEY missing. exiting.');
+    const required_var = [DB_URL, DB_NAME, BOT_TOKEN, FACEIT_KEY, FACEIT_URL];
+    const required_var_string = ['DB_URL', 'DB_NAME', 'BOT_TOKEN', 'FACEIT_KEY', 'FACEIT_URL'];
+
+    if (required_var.indexOf(null) !== -1) {
+      Logger.error('ENV', 'MISSING', `${required_var_string[required_var.indexOf(null)]} = null`);
 
       return reject(null);
     }
