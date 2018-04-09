@@ -15,6 +15,7 @@ const FACEIT_KEY = process.env.FACEIT_KEY || null;
 const FACEIT_URL = process.env.FACEIT_URL || null;
 
 const CHANNEL_ID = process.env.CHANNEL_ID || null;
+const ERROR_LOG_CHANNEL_ID = process.env.ERROR_LOG_CHANNEL_ID;
 
 // const COMMAND_PREFIX = process.env.COMMAND_PREFIX || '.';
 
@@ -89,12 +90,32 @@ login().then(() => {
   Logger.log('LOGIN', 'SUCCESS', 'Everything passed!');
   getTeam(state).then((players) => {
     state.set('players', players);
+  }).catch((err) => {
+    Logger.error('GETTEAM', 'FAIL', `exiting. err: ${err}`);
+
+    const channels = client.channels;
+    LogErrorChannel(channels, err);
+
+    process.exit(-1);
   });
 
   nowPlaying(client, state);
-}).catch(() => {
-  Logger.error('LOGIN', 'FAIL', 'exiting...');
+}).catch((err) => {
+  Logger.error('LOGIN', 'FAIL', `exiting. err: ${err}`);
 
   process.exit(-1);
 });
 
+const LogErrorChannel = (channels, message) => {
+  const channel = channels.find('id', ERROR_LOG_CHANNEL_ID);
+
+  if (channel === null) {
+    return;
+  }
+
+  let out = 'ERROR:';
+
+  out += '```' + JSON.stringify(message, null, 2) + '```';
+
+  channel.send(out);
+};

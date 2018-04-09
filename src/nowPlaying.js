@@ -5,6 +5,7 @@ const _ = require('lodash');
 const Logger = require('./Logger');
 
 const CHANNEL_ID = process.env.CHANNEL_ID;
+const ERROR_LOG_CHANNEL_ID = process.env.ERROR_LOG_CHANNEL_ID;
 
 const MATCH_WIN = 'win';
 const MATCH_LOSE = 'lose';
@@ -34,6 +35,7 @@ const nowPlaying = (client, state) => {
     return;
   }
 
+  const channels = client.channels;
   const channel = client.channels.find('id', CHANNEL_ID);
 
   if (channel === null) {
@@ -78,7 +80,7 @@ const nowPlaying = (client, state) => {
       .then(handleMatch)
       .catch((err) => {
         Logger.error('GET_PLAYER', 'CATCH', `err: ${err}`);
-
+        LogErrorChannel(channels, err);
         parsePlayer();
       });
   };
@@ -93,6 +95,7 @@ const nowPlaying = (client, state) => {
       .then(handleTeams)
       .catch((err) => {
         Logger.error('GET_MATCH', 'CATCH', `err: ${err}`);
+        LogErrorChannel(channels, err);
 
         const match = state.get('matches')[matchId];
 
@@ -274,6 +277,20 @@ const parseDate = (time) => {
   };
 
   return (new Date(time)).toLocaleDateString('en-US', dateOptions);
+};
+
+const LogErrorChannel = (channels, message) => {
+  const channel = channels.find('id', ERROR_LOG_CHANNEL_ID);
+
+  if (channel === null) {
+    return;
+  }
+
+  let out = 'ERROR:';
+
+  out += '```' + JSON.stringify(message, null, 2) + '```';
+
+  channel.send(out);
 };
 
 module.exports = nowPlaying;
