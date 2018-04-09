@@ -170,9 +170,7 @@ const nowPlaying = (client, state) => {
         name: 'End Time',
         value: parseDate(matchData.finished_at),
         inline: true
-      });
-
-      options.fields.push({
+      }, {
         name: '\u200b',
         value: '\u200b',
         inline: true
