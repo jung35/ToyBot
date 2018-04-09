@@ -4,6 +4,8 @@ const Discord = require('discord.js');
 const _ = require('lodash');
 const Logger = require('./Logger');
 
+const CHANNEL_ID = process.env.CHANNEL_ID;
+
 const MATCH_WIN = 'win';
 const MATCH_LOSE = 'lose';
 const MATCH_FINISH = 'finish';
@@ -32,7 +34,7 @@ const nowPlaying = (client, state) => {
     return;
   }
 
-  const channel = client.channels.find('id', state.get('nowPlayingChannelId'));
+  const channel = client.channels.find('id', CHANNEL_ID);
 
   if (channel === null) {
     return;

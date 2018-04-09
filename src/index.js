@@ -13,15 +13,17 @@ const nowPlaying = require('./nowPlaying');
 const BOT_TOKEN = process.env.BOT_TOKEN || null;
 const FACEIT_KEY = process.env.FACEIT_KEY || null;
 const FACEIT_URL = process.env.FACEIT_URL || null;
+
+const CHANNEL_ID = process.env.CHANNEL_ID || null;
+
 // const COMMAND_PREFIX = process.env.COMMAND_PREFIX || '.';
 
 const client = new Discord.Client();
 
 const login = () => {
-
   return new Promise((resolve, reject) => {
-    const required_var = [DB_URL, DB_NAME, BOT_TOKEN, FACEIT_KEY, FACEIT_URL];
-    const required_var_string = ['DB_URL', 'DB_NAME', 'BOT_TOKEN', 'FACEIT_KEY', 'FACEIT_URL'];
+    const required_var = [DB_URL, DB_NAME, BOT_TOKEN, FACEIT_KEY, FACEIT_URL, CHANNEL_ID];
+    const required_var_string = ['DB_URL', 'DB_NAME', 'BOT_TOKEN', 'FACEIT_KEY', 'FACEIT_URL', 'CHANNEL_ID'];
 
     if (required_var.indexOf(null) !== -1) {
       Logger.error('ENV', 'MISSING', `${required_var_string[required_var.indexOf(null)]} = null`);

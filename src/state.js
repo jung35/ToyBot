@@ -4,7 +4,6 @@ const _ = require('lodash');
 const delay = 60;
 
 const state = {
-  nowPlayingChannelId: process.env.CHANNEL_ID,
   players: {},
   matches: {},
   lastUpdate: 0,
