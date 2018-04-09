@@ -1,6 +1,6 @@
 require('dotenv').config();
 const Discord = require('discord.js');
-const MongoClient = require('mongodb').MongoClient;
+// const MongoClient = require('mongodb').MongoClient;
 const DB_URL = process.env.DB_URL || null;
 const DB_NAME = process.env.DB_NAME || null;
 
@@ -26,7 +26,24 @@ const login = () => {
       return reject(null);
     }
 
-    return MongoClient.connect(DB_URL, function (err, mongo) {
+    return client.login(BOT_TOKEN).then((token) => {
+      if (BOT_TOKEN !== token) {
+        Logger.error('DISCORD', 'FAIL', 'BOT_TOKEN does not match!');
+
+        reject(null);
+      }
+
+      Logger.log('DISCORD', 'SUCCESS', 'BOT_TOKEN accepted.');
+
+      resolve(null);
+    }).catch((err) => {
+      Logger.error('DISCORD', 'FAIL', 'BOT_TOKEN rejected', `err: ${err}`);
+
+      return reject(null);
+    });
+
+    // Should've made this under different branch...
+    /*return MongoClient.connect(DB_URL, function (err, mongo) {
       if (err) {
         Logger.error('DB_CONNECT', 'ERROR', `err: ${err}`);
 
@@ -54,7 +71,7 @@ const login = () => {
       });
 
       mongo.close();
-    });
+    }); */
 
   });
 };
