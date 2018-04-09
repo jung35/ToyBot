@@ -1,12 +1,14 @@
 require('dotenv').config();
 const Discord = require('discord.js');
-const Logger = require('./Logger');
+// const MongoClient = require('mongodb').MongoClient;
+const DB_URL = process.env.DB_URL || null;
+const DB_NAME = process.env.DB_NAME || null;
 
+const Logger = require('./Logger');
 const state = require('./state');
 
 const getTeam = require('./faceit/getTeam');
 const nowPlaying = require('./nowPlaying');
-
 
 const BOT_TOKEN = process.env.BOT_TOKEN || null;
 const FACEIT_KEY = process.env.FACEIT_KEY || null;
@@ -16,24 +18,78 @@ const FACEIT_URL = process.env.FACEIT_URL || null;
 const client = new Discord.Client();
 
 const login = () => {
-  if (BOT_TOKEN === null || FACEIT_KEY === null || FACEIT_URL === null) {
-    Logger.error('BOT_TOKEN or/and FACEIT_KEY missing. exiting.');
 
-    return false;
-  }
-  client.login(BOT_TOKEN);
+  return new Promise((resolve, reject) => {
+    if ([DB_URL, DB_NAME, BOT_TOKEN, FACEIT_KEY, FACEIT_URL].indexOf(null) !== -1) {
+      Logger.error('ENV', 'MISSING', 'BOT_TOKEN or/and FACEIT_KEY missing. exiting.');
 
-  return true;
+      return reject(null);
+    }
+
+    return client.login(BOT_TOKEN).then((token) => {
+      if (BOT_TOKEN !== token) {
+        Logger.error('DISCORD', 'FAIL', 'BOT_TOKEN does not match!');
+
+        reject(null);
+      }
+
+      Logger.log('DISCORD', 'SUCCESS', 'BOT_TOKEN accepted.');
+
+      resolve(null);
+    }).catch((err) => {
+      Logger.error('DISCORD', 'FAIL', 'BOT_TOKEN rejected', `err: ${err}`);
+
+      return reject(null);
+    });
+
+    // Should've made this under different branch...
+    /*return MongoClient.connect(DB_URL, function (err, mongo) {
+      if (err) {
+        Logger.error('DB_CONNECT', 'ERROR', `err: ${err}`);
+
+        return reject(null);
+      }
+
+      Logger.log('DB_CONNECT', 'SUCCESS', 'Connected successfully to server');
+
+      // const db = client.db(DB_NAME);
+
+      client.login(BOT_TOKEN).then((token) => {
+        if (BOT_TOKEN !== token) {
+          Logger.error('DISCORD', 'FAIL', 'BOT_TOKEN does not match!');
+
+          reject(null);
+        }
+
+        Logger.log('DISCORD', 'SUCCESS', 'BOT_TOKEN accepted.');
+
+        resolve(null);
+      }).catch((err) => {
+        Logger.error('DISCORD', 'FAIL', 'BOT_TOKEN rejected', `err: ${err}`);
+
+        return reject(null);
+      });
+
+      mongo.close();
+    }); */
+
+  });
 };
 
 client.on('ready', () => {
-  Logger.log(`Logged in as ${client.user.tag}!`);
+  Logger.log('DISCORD', 'READY', `Logged in as ${client.user.tag}!`);
 });
 
-if (login()) {
+login().then(() => {
+  Logger.log('LOGIN', 'SUCCESS', 'Everything passed!');
   getTeam(state).then((players) => {
     state.set('players', players);
   });
 
   nowPlaying(client, state);
-}
+}).catch(() => {
+  Logger.error('LOGIN', 'FAIL', 'exiting...');
+
+  process.exit(-1);
+});
+

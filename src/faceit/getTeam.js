@@ -6,7 +6,7 @@ const TEAM_ID = process.env.TEAM_ID || null;
 const FACEIT_URL = process.env.FACEIT_URL;
 
 const getTeam = () => {
-  Logger.log('[API_CALL:GET]getTeam');
+  Logger.log('GET_TEAM', 'GET', `id: ${TEAM_ID}`);
 
   return new Promise((resolve, reject) => {
     request
@@ -16,12 +16,12 @@ const getTeam = () => {
         if (err) {
           reject(err);
 
-          return Logger.error(`[API_CALL:REJECT]getTeam error:${err}`);
+          return Logger.error('GET_TEAM', 'REJECT', `error: ${err}`);
         }
 
         const team = res.body.data;
 
-        Logger.log(`[API_CALL:RESOLVE]getTeam team:${team.nickname}`);
+        Logger.log('GET_TEAM', 'RESOLVE', `team: ${team.nickname}`);
 
         const players = {};
 
@@ -35,7 +35,7 @@ const getTeam = () => {
           };
         });
 
-        Logger.log('[PLAYERS]', Object.keys(players));
+        Logger.log('GET_TEAM', 'PLAYERS', 'players: [' + Object.keys(players).join(', ') + ']');
 
         resolve(players);
       });
