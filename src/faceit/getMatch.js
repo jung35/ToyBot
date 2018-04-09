@@ -19,6 +19,12 @@ const getMatch = (players, matchId) => {
           return Logger.error('GET_MATCH', 'REJECT', `match: ${matchId} error: ${err}`);
         }
 
+        if (res.status !== 200) {
+          reject(err);
+
+          return Logger.error('GET_PLAYER', 'REJECT', `status: ${res.status} error: ${res.body}`);
+        }
+
         Logger.log('GET_MATCH', 'RESOLVE', `match: ${matchId}`);
         const match = res.body.data;
 

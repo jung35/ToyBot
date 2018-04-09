@@ -19,6 +19,12 @@ const getTeam = () => {
           return Logger.error('GET_TEAM', 'REJECT', `error: ${err}`);
         }
 
+        if (res.status !== 200) {
+          reject(err);
+
+          return Logger.error('GET_TEAM', 'REJECT', `status: ${res.status} error: ${res.body}`);
+        }
+
         const team = res.body.data;
 
         Logger.log('GET_TEAM', 'RESOLVE', `team: ${team.nickname}`);

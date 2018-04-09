@@ -18,6 +18,12 @@ const getPlayer = (player) => {
           return Logger.error('GET_PLAYER', 'REJECT', `player: ${player.name} error: ${err}`);
         }
 
+        if (res.status !== 200) {
+          reject(err);
+
+          return Logger.error('GET_PLAYER', 'REJECT', `status: ${res.status} error: ${res.body}`);
+        }
+
         Logger.log('GET_PLAYER', 'RESOLVE', `player: ${player.name}`);
 
         const room = res.body.data.ongoing_rooms;
